@@ -12,7 +12,7 @@ from datetime import datetime
 load_dotenv()
 
 # Load your API key from an environment variable or secret management service
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 class HomeView(APIView):
     def get(self, request, *args, **kwargs):
@@ -46,7 +46,7 @@ class MeditationScriptView(APIView):
         print("\033[92m" + "Script saved to file" + "\033[0m")
         script = texttospeech.SynthesisInput(ssml=script)
         client = texttospeech.TextToSpeechClient(
-            client_options={"api_key": os.environ.get("GOOGLE_API_KEY")}
+            client_options={"api_key": os.environ["GOOGLE_API_KEY"]}
         )
 
         voice = texttospeech.VoiceSelectionParams(
