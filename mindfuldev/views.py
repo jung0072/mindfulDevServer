@@ -14,6 +14,9 @@ load_dotenv()
 # Load your API key from an environment variable or secret management service
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
+class HomeView(APIView):
+    def get(self, request, *args, **kwargs):
+        return render(request, "index.html")
 
 class MeditationScriptView(APIView):
     def post(self, request, *args, **kwargs):

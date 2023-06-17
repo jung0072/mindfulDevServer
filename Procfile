@@ -1,1 +1,1 @@
-web: gunicorn mindfuldev.wsgi --log-file -
+web: gunicorn mindfuldev.wsgi
