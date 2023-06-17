@@ -25,25 +25,29 @@ class MeditationScriptView(APIView):
         body = request.body.decode("utf-8")
         data = json.loads(body)
         input_text = data["input"]
-        print("\033[91m" + "GET request received: " + "\033[0m" + input_text)
 
         script = self.generateScript(input_text)
-        self.generateVoice(date, script)
+        audio = self.generateVoice(date, script)
 
-        return Response(data=script, status=status.HTTP_200_OK)
+        result = {
+            "script": script,
+            "audio": audio
+        }
+
+        return Response(data=result, status=status.HTTP_200_OK)
 
     def generateScript(self, input_text):
         chat_completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": input_text}]
         )
         script = chat_completion.choices[0]["message"]["content"]
-        print("\033[92m" + "Script generated: " + "\033[0m" + script)
+
         return script
 
     def generateVoice(self, date, script):
         with open("./mindfuldev/assets/script_{}.ssml".format(date), "w") as f:
             f.write(script)
-        print("\033[92m" + "Script saved to file" + "\033[0m")
+
         script = texttospeech.SynthesisInput(ssml=script)
         client = texttospeech.TextToSpeechClient(
             client_options={"api_key": os.environ["GOOGLE_API_KEY"]}
@@ -60,8 +64,9 @@ class MeditationScriptView(APIView):
         response = client.synthesize_speech(
             input=script, voice=voice, audio_config=audio_config
         )
-        print("\033[92m" + "Audio generated" + "\033[0m")
+        return response.audio_content
+    
         # The response's audio_content is binary.
-        with open("output{}.mp3".format(date), "wb") as out:
-            out.write(response.audio_content)
-            print('Audio content written to file "output.mp3"')
+        # with open("output{}.mp3".format(date), "wb") as out:
+        #     out.write(response.audio_content)
+        #     print('Audio content written to file "output.mp3"')
