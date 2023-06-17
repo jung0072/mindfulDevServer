@@ -19,6 +19,7 @@ from . import views
 from django.urls import path
 
 urlpatterns = [
+    path("/", views.HomeView.as_view(), name="home"),
     path('admin/', admin.site.urls),
     path('api/', views.MeditationScriptView.as_view(), name='api'),
 ]
