@@ -1,1 +1,1 @@
-web: gunicorn mindfuldev.wsgi
+web: python manage.py runserver
