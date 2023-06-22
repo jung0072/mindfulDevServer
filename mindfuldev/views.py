@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from google.cloud import texttospeech
 import json
 from datetime import datetime
+from django.http import HttpResponse
+from email.message import EmailMessage
 
 load_dotenv()
 
@@ -23,18 +25,30 @@ class HomeView(APIView):
 class MeditationScriptView(APIView):
     def post(self, request, *args, **kwargs):
         # assign current data to a variable
-        date = datetime.today()
-        body = request.body.decode("utf-8")
-        data = json.loads(body)
-        input_text = data["input"]
+        
+        # body = request.body.decode("utf-8")
+        body = json.loads(request.body.decode("utf-8"))
+        input_text = body["input"]
+
+        response = HttpResponse(content_type='multipart/mixed')
 
         script = self.generateScript(input_text)
-        # audio is binary.
+        script_part = EmailMessage()
+        script_part.set_content(script)
+        script_part.add_header('Content-Type', 'text/plain')
+        script_part.add_header('Content-Disposition', 'attachment', filename='script.txt')
+        response.write(script_part.as_bytes())
+
+        # Create the audio part
+        date = datetime.today()
         audio = self.generateVoice(date, script)
+        audio_part = EmailMessage()
+        audio_part.set_content(audio)
+        audio_part.add_header('Content-Type', 'audio/mpeg')
+        audio_part.add_header('Content-Disposition', 'attachment', filename='audio.mp3')
+        response.write(audio_part.as_bytes())
 
-        # result = {"script": script, "audio": audio}
-
-        return Response(data=script, status=status.HTTP_200_OK)
+        return response
 
     def generateScript(self, input_text):
         chat_completion = openai.ChatCompletion.create(
