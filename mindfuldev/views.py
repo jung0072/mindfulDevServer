@@ -14,9 +14,11 @@ load_dotenv()
 # Load your API key from an environment variable or secret management service
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
+
 class HomeView(APIView):
     def get(self, request, *args, **kwargs):
         return render(request, "index.html")
+
 
 class MeditationScriptView(APIView):
     def post(self, request, *args, **kwargs):
@@ -27,14 +29,12 @@ class MeditationScriptView(APIView):
         input_text = data["input"]
 
         script = self.generateScript(input_text)
+        # audio is binary.
         audio = self.generateVoice(date, script)
 
-        result = {
-            "script": script,
-            "audio": audio
-        }
+        # result = {"script": script, "audio": audio}
 
-        return Response(data=result, status=status.HTTP_200_OK)
+        return Response(data=script, status=status.HTTP_200_OK)
 
     def generateScript(self, input_text):
         chat_completion = openai.ChatCompletion.create(
@@ -65,7 +65,7 @@ class MeditationScriptView(APIView):
             input=script, voice=voice, audio_config=audio_config
         )
         return response.audio_content
-    
+
         # The response's audio_content is binary.
         # with open("output{}.mp3".format(date), "wb") as out:
         #     out.write(response.audio_content)
