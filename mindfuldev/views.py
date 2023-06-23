@@ -25,42 +25,39 @@ class HomeView(APIView):
 class MeditationScriptView(APIView):
     def post(self, request, *args, **kwargs):
         # assign current data to a variable
-        
+
         # body = request.body.decode("utf-8")
         body = json.loads(request.body.decode("utf-8"))
-        input_text = body["input"]
+        input_prompt = body["input"]
 
-        response = HttpResponse(content_type='multipart/mixed')
+        script = self.generateScript(input_prompt)
 
-        script = self.generateScript(input_text)
-        script_part = EmailMessage()
-        script_part.set_content(script)
-        script_part.add_header('Content-Type', 'text/plain')
-        script_part.add_header('Content-Disposition', 'attachment', filename='script.txt')
-        response.write(script_part.as_bytes())
+        return Response({"script": script}, status=status.HTTP_200_OK)
 
-        # Create the audio part
-        date = datetime.today()
-        audio = self.generateVoice(date, script)
-        audio_part = EmailMessage()
-        audio_part.set_content(audio)
-        audio_part.add_header('Content-Type', 'audio/mpeg')
-        audio_part.add_header('Content-Disposition', 'attachment', filename='audio.mp3')
-        response.write(audio_part.as_bytes())
-
-        return response
-
-    def generateScript(self, input_text):
+    def generateScript(self, input_prompt):
         chat_completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", messages=[{"role": "user", "content": input_text}]
+            model="gpt-3.5-turbo", messages=[{"role": "user", "content": input_prompt}]
         )
         script = chat_completion.choices[0]["message"]["content"]
 
         return script
 
-    def generateVoice(self, date, script):
-        with open("./mindfuldev/assets/script_{}.ssml".format(date), "w") as f:
-            f.write(script)
+
+class GenerateVoiceView(APIView):
+    def post(self, request, *args, **kwargs):
+        # assign current data to a variable
+        body = json.loads(request.body.decode("utf-8"))
+        date = datetime.now().strftime("%Y-%m-%d")
+        script = body["script"]
+
+        audio = self.generateVoice(script)
+
+        response = HttpResponse(audio, content_type="application/octet-stream")
+        return response
+
+    def generateVoice(self, script):
+        # with open("./mindfuldev/assets/script_{}.ssml".format(date), "w") as f:
+        #     f.write(script)
 
         script = texttospeech.SynthesisInput(ssml=script)
         client = texttospeech.TextToSpeechClient(
